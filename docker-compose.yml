@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: bigdata_spark
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5445:5432"
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+      - ./data:/data
+    networks:
+      - lab_net
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    environment:
+      CLICKHOUSE_USER: user
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: default
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    networks:
+      - lab_net
+
+  pyspark:
+    image: jupyter/pyspark-notebook:latest
+    container_name: pyspark
+    user: root
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/work/data
+    depends_on:
+      - postgres
+      - clickhouse
+    networks:
+      - lab_net
+
+networks:
+  lab_net:
+    driver: bridge
